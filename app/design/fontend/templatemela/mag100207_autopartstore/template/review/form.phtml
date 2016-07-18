@@ -1,0 +1,117 @@
+<?php
+/**
+ * Magento
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE_AFL.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magento.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Magento to newer
+ * versions in the future. If you wish to customize Magento for your
+ * needs please refer to http://www.magento.com for more information.
+ *
+ * @category    design
+ * @package     base_default
+ * @copyright   Copyright (c) 2006-2016 X.commerce, Inc. and affiliates (http://www.magento.com)
+ * @license     http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ */
+?>
+
+
+<?php
+$output='';
+if(isset($_POST['name']) && isset($_POST['email']) && isset($_POST['question'])){
+    
+    $name=Mage::helper('core')->quoteEscape($_POST['name']);
+    $email=Mage::helper('core')->quoteEscape($_POST['email']);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {$output = "Invalid email address";}
+    
+    if(empty($output)){
+        
+        $question=Mage::helper('core')->quoteEscape(nl2br($_POST['question']));
+        $product_id = Mage::registry('current_product')->getId();
+        $product = Mage::getModel('catalog/product')->load($product_id);
+    
+        $url="http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $product_name=Mage::helper('core')->quoteEscape($product->getName());
+        $product_sku=Mage::helper('core')->quoteEscape($product->getSku());
+        
+        $msg='Question is about <b>'.$product_name.'.</b><br />';
+        $msg.='<b>Product SKU: </b>'.$product_sku.'<br />';
+        $msg.='<b>Product URL: </b><a href="'.$url.'">'.$url.'</a><br /><br /><br />';
+        $msg.='<b>Name: </b>'.$name.'<br />';
+        $msg.='<b>Email: </b>'.$email.'<br />';
+        $msg.='<b>Question: </b>'.$question.'<br />';
+        
+        $mail_from=Mage::getStoreConfig('trans_email/ident_general/email');
+        $mail_to=Mage::getStoreConfig('contacts/email/recipient_email');
+        
+        $headers = "MIME-Version: 1.0" . "\r\n";
+        $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+        $headers .= 'From: <'.$mail_from.'>' . "\r\n";
+        
+        mail($mail_to,'Question about product',$msg,$headers);
+        $output = 'Your question has been submitted successfully! We will get back to you shortly.';
+    }
+}
+
+if(!empty($output)){
+?>
+
+<script type="text/javascript">
+jQuery(document).ready(function(){
+    jQuery('.product-collateral').before('<p style="color: #f00; font-weight: bold;"><?php echo $output; ?></p>');
+});
+</script>
+
+<?php } ?>
+
+<div id="messages_product_view"><?php echo $this->getMessagesBlock()->toHtml() ?></div>
+<div class="page-title">
+    <h1><?php echo Mage::helper('contacts')->__('Ask Question') ?></h1>
+</div>
+<form action="" id="contactForm" method="post">
+    <div class="fieldset">
+        <h2 class="legend"><?php echo Mage::helper('contacts')->__('Ask Your Question') ?></h2>
+        <ul class="form-list">
+            <li class="fields">
+                <div class="field">
+                    <label for="name" class="required"><em>*</em><?php echo Mage::helper('contacts')->__('Name') ?></label>
+                    <div class="input-box">
+                        <input name="name" id="name" title="<?php echo Mage::helper('core')->quoteEscape(Mage::helper('contacts')->__('Name')) ?>" value="<?php echo $this->escapeHtml($this->helper('contacts')->getUserName()) ?>" class="input-text required-entry" type="text" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="email" class="required"><em>*</em><?php echo Mage::helper('contacts')->__('Email') ?></label>
+                    <div class="input-box">
+                        <input name="email" id="email" title="<?php echo Mage::helper('core')->quoteEscape(Mage::helper('contacts')->__('Email')) ?>" value="<?php echo $this->escapeHtml($this->helper('contacts')->getUserEmail()) ?>" class="input-text required-entry validate-email" type="text" />
+                    </div>
+                </div>
+            </li>
+            <li class="wide">
+                <label for="question" class="required"><em>*</em><?php echo Mage::helper('contacts')->__('Question') ?></label>
+                <div class="input-box">
+                    <textarea name="question" id="question" title="<?php echo Mage::helper('core')->quoteEscape(Mage::helper('contacts')->__('Question')) ?>" class="required-entry input-text" cols="5" rows="3"></textarea>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="buttons-set">
+        <p class="required"><?php echo Mage::helper('contacts')->__('* Required Fields') ?></p>
+        <input type="text" name="hideit" id="hideit" value="" style="display:none !important;" />
+        <button type="submit" title="<?php echo Mage::helper('core')->quoteEscape(Mage::helper('contacts')->__('Submit')) ?>" class="button"><span><span><?php echo Mage::helper('contacts')->__('Submit') ?></span></span></button>
+    </div>
+</form>
+<script type="text/javascript">
+//<![CDATA[
+    var contactForm = new VarienForm('contactForm', true);
+//]]>
+</script>
